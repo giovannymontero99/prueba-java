@@ -26,27 +26,30 @@ public class EmpleadosControllers {
     @PostMapping(path = "/add")
     public @ResponseBody EmpleadosModel addNewUser (@RequestBody EmpleadosModel user){
         
+        // Creamos el usuario para guardarlo en la base
         EmpleadosModel newUser = new EmpleadosModel();
-
         newUser.setNombre(user.getNombre());
         newUser.setApellido(user.getApellido());
         newUser.setPais(user.getPais());
         newUser.setOtrosNombres(user.getOtrosNombres());
 
+        // Si de colombia agraga el dominio correspondiente
+        String dominio = user.getPais() == "Colombia" ? "com": "com.us";
 
-        boolean userExist = true;
-        while ( userExist ) {
-            if(empleadoRepository.existsByEmail(user.getEmail())){
-                userExist = true;
-            }else{
-                
-                newUser.setEmail(null);
-                userExist = false;
-            }
-            
+        // Busca en la base si existe el nombre y usuario duplicado
+        if ( empleadoRepository.countUserDuplicate(user.getNombre(), user.getApellido()) > 0 ){
+            int total = empleadoRepository.countUserDuplicate(user.getApellido(),user.getApellido()) + 1;
+            newUser.setEmail( user.getEmail() + total + "@jvntecnologias." + dominio );
+        }else{
+            newUser.setEmail( user.getEmail() + "@jvntecnologias." + dominio );
         }
+        // Una vez realizado la creacion de usuario procedemos a guardar en la BD
+        empleadoRepository.save(newUser);
         return user;
     }
+
+
+
     // Returns All the Empleados at path `./all`
     @GetMapping(path = "/all")
     public @ResponseBody Iterable<EmpleadosModel> getAllUsers() {
